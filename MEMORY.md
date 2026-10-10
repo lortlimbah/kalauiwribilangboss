@@ -93,3 +93,6 @@
 - Brow neutral fix: `mid`-kind signals now center on range middle, not on
   `default` — rest sits middle for any min/max/def combo, full travel both
   ways. (BrowLeftY/RightY converted from `bi` to `mid` for this.)
+- Mirror is per-axis now: yaw follows the raw sign (Sandoitchi agrees),
+  roll stays mirrored (user-verified), posX stays unmirrored. Flip any
+  single axis with YAW/ROLL/POSX_MIRROR without touching the others.

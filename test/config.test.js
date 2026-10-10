@@ -47,4 +47,15 @@ UNKNOWN_KEY=nope
   it("rejects bad out modes", () => {
     assert.throws(() => resolveConfig(["--out", "vmc"], {}));
   });
+
+  it("parses independent mirror flags", () => {
+    const def = resolveConfig([], {});
+    assert.equal(def.yawMirror, false);
+    assert.equal(def.rollMirror, true);
+    assert.equal(def.posMirrorX, false);
+    const cfg = resolveConfig(["--yaw-mirror", "--no-roll-mirror"], {});
+    assert.equal(cfg.yawMirror, true);
+    assert.equal(cfg.rollMirror, false);
+    assert.throws(() => resolveConfig(["--mirror"], {}));
+  });
 });

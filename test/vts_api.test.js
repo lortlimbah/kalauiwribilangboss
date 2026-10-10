@@ -167,7 +167,7 @@ describe("vts api", () => {
         Position: { x: 0, y: 0, z: 0.4 },
       },
       st0,
-      { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, mirror: false }
+      { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, yawMirror: false, rollMirror: false, posMirrorX: true }
     );
     assert.equal(faceFound, true);
     const byId = Object.fromEntries(signals.map((s) => [s.id, s]));
@@ -177,28 +177,33 @@ describe("vts api", () => {
     assert.ok(byId.MouthSmile.value > 0.7);
   });
 
-  it("mirrors yaw, roll and position X with the mirror flag", () => {
+  it("mirrors yaw, roll and position X independently", () => {
     const neutral = {
       FaceFound: true,
       BlendShapes: [],
       Rotation: { x: 0, y: 0, z: 0 },
       Position: { x: 0, y: 0, z: 0.4 },
     };
-    const mk = (mirror) => {
-      const st0 = mapVtsSignals(neutral, {}, { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, mirror }).poseState;
+    const base = { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, yawMirror: false, rollMirror: false, posMirrorX: true };
+    const mk = (patch) => {
+      const st0 = mapVtsSignals(neutral, {}, { ...base, ...patch }).poseState;
       return mapVtsSignals(
         { ...neutral, Rotation: { x: 10, y: 0, z: 6 }, Position: { x: 0.1, y: 0, z: 0.4 } },
         st0,
-        { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, mirror, vtsPosGain: 1 }
+        { ...base, ...patch, vtsPosGain: 1 }
       ).signals;
     };
     const byId = (signals) => Object.fromEntries(signals.map((s) => [s.id, s.value]));
-    const a = byId(mk(false));
-    const b = byId(mk(true));
-    assert.ok(Math.abs(a.FaceAngleX + b.FaceAngleX) < 1e-9);
-    assert.ok(Math.abs(a.FaceAngleZ + b.FaceAngleZ) < 1e-9);
-    assert.ok(Math.abs(a.FacePositionX + b.FacePositionX) < 1e-9);
-    assert.ok(a.FaceAngleX > 0);
+    const plain = byId(mk({}));
+    assert.ok(plain.FaceAngleX > 0);
+    const flipY = byId(mk({ yawMirror: true }));
+    assert.ok(Math.abs(plain.FaceAngleX + flipY.FaceAngleX) < 1e-9);
+    assert.equal(flipY.FaceAngleZ, plain.FaceAngleZ);
+    const flipR = byId(mk({ rollMirror: true }));
+    assert.ok(Math.abs(plain.FaceAngleZ + flipR.FaceAngleZ) < 1e-9);
+    assert.equal(flipR.FaceAngleX, plain.FaceAngleX);
+    const flipP = byId(mk({ posMirrorX: false }));
+    assert.ok(Math.abs(plain.FacePositionX + flipP.FacePositionX) < 1e-9);
   });
 
   it("scales mid-neutral signals around the default", () => {
@@ -221,7 +226,7 @@ describe("vts api", () => {
       Rotation: { x: 0, y: 0, z: 0 },
       Position: { x: 0, y: 0, z: 0.4 },
     };
-    const st0 = mapVtsSignals(neutral, {}, { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, mirror: false }).poseState;
+    const st0 = mapVtsSignals(neutral, {}, { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, yawMirror: false, rollMirror: false, posMirrorX: true }).poseState;
     const { signals } = mapVtsSignals(
       {
         ...neutral,
@@ -234,7 +239,7 @@ describe("vts api", () => {
         Position: { x: 0.1, y: 0, z: 0.4 },
       },
       st0,
-      { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, vtsPosGain: 1, mirror: false }
+      { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, vtsPosGain: 1, yawMirror: false, rollMirror: false, posMirrorX: true }
     );
     const byId = Object.fromEntries(signals.map((s) => [s.id, s.value]));
     assert.equal(byId.EyeLeftX, -1);

@@ -296,10 +296,12 @@ export function mapVtsSignals(frame, vtsState = {}, opts = {}) {
     rotLeak: opts.rotLeak ?? 0.001,
   });
   const rotScale = opts.rotScale ?? 1;
-  const mirror = opts.mirror ?? true;
-  const yawSign = (opts.yawSign ?? 1) * (mirror ? -1 : 1);
+  const yawMirror = opts.yawMirror ?? false;
+  const rollMirror = opts.rollMirror ?? true;
+  const posMirrorX = opts.posMirrorX ?? false;
+  const yawSign = (opts.yawSign ?? 1) * (yawMirror ? -1 : 1);
   const pitchSign = opts.pitchSign ?? -1;
-  const rollSign = (opts.rollSign ?? 1) * (mirror ? -1 : 1);
+  const rollSign = (opts.rollSign ?? 1) * (rollMirror ? -1 : 1);
   const browSign = opts.browSign ?? 1;
   const posGain = opts.vtsPosGain ?? 0.3;
   const posZGain = opts.vtsPosZGain ?? 0.15;
@@ -344,7 +346,7 @@ export function mapVtsSignals(frame, vtsState = {}, opts = {}) {
   if (!found && pe && pp) {
     return {
       faceFound: false,
-      signals: poseSignals(scalars, blend, pe[1], pe[0], pe[2], pp, posGain, posZGain, mirror, rollGain, browSign),
+      signals: poseSignals(scalars, blend, pe[1], pe[0], pe[2], pp, posGain, posZGain, posMirrorX, rollGain, browSign),
       poseState: { ...vtsState, base: pose.state },
     };
   }
@@ -357,12 +359,12 @@ export function mapVtsSignals(frame, vtsState = {}, opts = {}) {
   const next = { base: pose.state, euler, pos, streak, grace, peak };
   return {
     faceFound: found,
-    signals: poseSignals(scalars, blend, euler[1], euler[0], euler[2], pos, posGain * agc, posZGain * agc, mirror, rollGain, browSign),
+    signals: poseSignals(scalars, blend, euler[1], euler[0], euler[2], pos, posGain * agc, posZGain * agc, posMirrorX, rollGain, browSign),
     poseState: next,
   };
 }
 
-function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, mirror = true, rollGain = 0.15, browSign = 1) {
+function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, posMirrorX = false, rollGain = 0.15, browSign = 1) {
   const smileL = bOf(blend, "MouthSmileLeft");
   const smileR = bOf(blend, "MouthSmileRight");
   const frownL = bOf(blend, "MouthFrownLeft");
@@ -383,7 +385,7 @@ function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, m
   const browROut = browSign < 0 ? 1 - browUpR : browUpR;
   const mouthX = ((bOf(blend, "MouthLeft") - bOf(blend, "MouthRight")) + (smileL - smileR)) * (1 - tongue);
   return [
-    { id: "FacePositionX", kind: "bi", value: (mirror ? pos[0] : -pos[0]) * posGain },
+    { id: "FacePositionX", kind: "bi", value: (posMirrorX ? -pos[0] : pos[0]) * posGain },
     { id: "FacePositionY", kind: "bi", value: pos[1] * posGain },
     { id: "FacePositionZ", kind: "bi", value: pos[2] * posZGain },
     { id: "FaceAngleX", kind: "bi", value: yaw / 30 },

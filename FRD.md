@@ -132,3 +132,6 @@ Out of scope: VTS-API sender v1, VMC/OSC output v1, GUI, auth flows.
 - OSF/VMC output work: packets are byte-exact and loopback-verified, but
   the model doesn't move on the author's Proton setup. Revisit with a
   working UDP path (native VTS or fixed Wine networking).
+- [x] Mirror bundle split: yaw/roll/posX flip independently
+  (`YAW_MIRROR` off, `ROLL_MIRROR` on, `POSX_MIRROR` off by default).
+  User confirmed head turn was the mirrored-wrong one; lean stays as-is.

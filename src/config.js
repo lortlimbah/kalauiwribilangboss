@@ -22,7 +22,9 @@ export const DEFAULTS = {
   pitchSign: -1,
   rollSign: 1,
   browSign: 1,
-  mirror: true,
+  yawMirror: false,
+  rollMirror: true,
+  posMirrorX: false,
   sentBy: "kalauiwribilangboss",
   requestTime: 5,
   keepaliveMs: 500,
@@ -67,7 +69,9 @@ const ENV_KEYS = {
   PITCH_SIGN: "pitchSign",
   ROLL_SIGN: "rollSign",
   BROW_SIGN: "browSign",
-  MIRROR: "mirror",
+  YAW_MIRROR: "yawMirror",
+  ROLL_MIRROR: "rollMirror",
+  POSX_MIRROR: "posMirrorX",
   SENT_BY: "sentBy",
   REQUEST_TIME: "requestTime",
   KEEPALIVE_MS: "keepaliveMs",
@@ -142,6 +146,9 @@ const FLAG_KEYS = {
   "pitch-sign": "pitchSign",
   "roll-sign": "rollSign",
   "brow-sign": "browSign",
+  "yaw-mirror": "yawMirror",
+  "roll-mirror": "rollMirror",
+  "posx-mirror": "posMirrorX",
   "sent-by": "sentBy",
   "request-time": "requestTime",
   "keepalive-ms": "keepaliveMs",
@@ -171,8 +178,12 @@ export function parseArgs(argv) {
     else if (arg === "--dump") out.dump = true;
     else if (arg === "--no-zero") out.zero = false;
     else if (arg === "--no-rot-zero") out.rotZero = false;
-    else if (arg === "--mirror") out.mirror = true;
-    else if (arg === "--no-mirror") out.mirror = false;
+    else if (arg === "--yaw-mirror") out.yawMirror = true;
+    else if (arg === "--no-yaw-mirror") out.yawMirror = false;
+    else if (arg === "--roll-mirror") out.rollMirror = true;
+    else if (arg === "--no-roll-mirror") out.rollMirror = false;
+    else if (arg === "--posx-mirror") out.posMirrorX = true;
+    else if (arg === "--no-posx-mirror") out.posMirrorX = false;
     else if (arg.startsWith("--")) {
       const key = arg.slice(2);
       if (!(key in FLAG_KEYS)) throw new Error(`unknown flag --${key}`);
@@ -257,10 +268,12 @@ export function resolveConfig(argv, envSource = null) {
   if (args.dump !== undefined) merged.dump = true;
   if (args.zero === false) merged.zero = false;
   if (args.rotZero === false) merged.rotZero = false;
-  if (args.mirror === true) merged.mirror = true;
-  else if (args.mirror === false) merged.mirror = false;
-  else if (typeof merged.mirror === "string") {
-    merged.mirror = ["1", "true", "yes"].includes(merged.mirror.toLowerCase());
+  for (const k of ["yawMirror", "rollMirror", "posMirrorX"]) {
+    if (args[k] === true) merged[k] = true;
+    else if (args[k] === false) merged[k] = false;
+    else if (typeof merged[k] === "string") {
+      merged[k] = ["1", "true", "yes"].includes(merged[k].toLowerCase());
+    }
   }
   merged.smooth = Math.min(0.95, Math.max(0, Number(merged.smooth) || 0));
   const out = String(merged.out).toLowerCase();

@@ -36,8 +36,9 @@ Options:
   --yaw-sign <n>        1 or -1 head yaw direction (default 1)
   --pitch-sign <n>      1 or -1 head pitch direction (default -1)
   --roll-sign <n>       1 or -1 head roll direction (default 1)
-  --mirror                mirror left-right (yaw, roll, position X, default on)
-  --no-mirror           disable mirroring
+  --yaw-mirror / --no-yaw-mirror       mirror head turn (default off)
+  --roll-mirror / --no-roll-mirror     mirror head lean (default on)
+  --posx-mirror / --no-posx-mirror     mirror body shift (default off)
   --sent-by <name>      app name sent to the iPhone
   --request-time <s>    seconds of data per keepalive, 0.5-10 (default 5)
   --keepalive-ms <n>    keepalive interval in ms (default 500)
@@ -112,7 +113,9 @@ async function main() {
     rollSign: cfg.rollSign,
     browSign: cfg.browSign,
     rollGain: cfg.rollGain,
-    mirror: cfg.mirror,
+    yawMirror: cfg.yawMirror,
+    rollMirror: cfg.rollMirror,
+    posMirrorX: cfg.posMirrorX,
     vtsPosGain: cfg.vtsPosGain,
     vtsPosZGain: cfg.vtsPosZGain,
     vtsPosJump: cfg.vtsPosJump,
