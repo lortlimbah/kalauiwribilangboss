@@ -90,3 +90,6 @@
 - v1.0.0 production: VTS path finalized and stable in daily use. OSF/VMC
   deferred to FRD §8. Repo has no remote yet; everything lives in the
   working tree. Never commit `.env` / `.vts_token`.
+- Brow neutral fix: `mid`-kind signals now center on range middle, not on
+  `default` — rest sits middle for any min/max/def combo, full travel both
+  ways. (BrowLeftY/RightY converted from `bi` to `mid` for this.)

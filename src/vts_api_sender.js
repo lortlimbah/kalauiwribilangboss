@@ -259,9 +259,10 @@ export function scaleSignal(table, id, kind, raw) {
   }
   if (kind === "mid") {
     const s = Math.min(1, Math.max(0, raw));
-    const t = (s - 0.5) * 2;
-    const span = t >= 0 ? r.max - r.def : r.def - r.min;
-    return r.def + t * span;
+    const mid = (r.min + r.max) / 2;
+    const half = (r.max - r.min) / 2;
+    const v = mid + (s - 0.5) * 2 * half;
+    return Math.min(r.max, Math.max(r.min, v));
   }
   const s = Math.min(1, Math.max(-1, raw));
   const span = s >= 0 ? r.max - r.def : r.def - r.min;
@@ -375,9 +376,11 @@ function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, m
   const mouthOpen = Math.min(1, Math.max(0, jawOpen - mouthClose - (rollU + rollL) * 0.2 + funnel * 0.2));
   const mouthSmile = ((smileL + smileR) / 2 - (frownL + frownR) / 2);
   const brows = 0.5 + (bOf(blend, "BrowOuterUpLeft") + bOf(blend, "BrowOuterUpRight") - bOf(blend, "BrowDownLeft") - bOf(blend, "BrowDownRight")) / 4;
-  const browUpL = (bOf(blend, "BrowOuterUpLeft") - bOf(blend, "BrowDownLeft")) * browSign;
-  const browUpR = (bOf(blend, "BrowOuterUpRight") - bOf(blend, "BrowDownRight")) * browSign;
+  const browUpL = 0.5 + (bOf(blend, "BrowOuterUpLeft") - bOf(blend, "BrowDownLeft")) / 2;
+  const browUpR = 0.5 + (bOf(blend, "BrowOuterUpRight") - bOf(blend, "BrowDownRight")) / 2;
   const browsOut = browSign < 0 ? 1 - brows : brows;
+  const browLOut = browSign < 0 ? 1 - browUpL : browUpL;
+  const browROut = browSign < 0 ? 1 - browUpR : browUpR;
   const mouthX = ((bOf(blend, "MouthLeft") - bOf(blend, "MouthRight")) + (smileL - smileR)) * (1 - tongue);
   return [
     { id: "FacePositionX", kind: "bi", value: (mirror ? pos[0] : -pos[0]) * posGain },
@@ -396,8 +399,8 @@ function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, m
     { id: "EyeRightX", kind: "bi", value: bOf(blend, "EyeLookInLeft") - bOf(blend, "EyeLookOutLeft") },
     { id: "EyeRightY", kind: "bi", value: bOf(blend, "EyeLookUpLeft") - bOf(blend, "EyeLookDownLeft") },
     { id: "BrowInnerUp", kind: "uni", value: bOf(blend, "BrowInnerUp") },
-    { id: "BrowLeftY", kind: "bi", value: browUpL },
-    { id: "BrowRightY", kind: "bi", value: browUpR },
+    { id: "BrowLeftY", kind: "mid", value: browLOut },
+    { id: "BrowRightY", kind: "mid", value: browROut },
     { id: "CheekPuff", kind: "uni", value: bOf(blend, "CheekPuff") },
     { id: "TongueOut", kind: "uni", value: tongue },
     { id: "MouthX", kind: "bi", value: mouthX },
