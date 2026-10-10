@@ -1,0 +1,11 @@
+.env
+.vts_token
+node_modules/
+*.log
+.DS_Store
+
+# Reference clones: keep sources, drop nested repos + model binaries
+# (re-clone upstream + download models to run facetracker.py itself)
+OpenSeeFace/.git/
+OpenSeeFace/models/
+VTubeStudioBlendshapeUDPReceiverTest/.git/

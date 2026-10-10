@@ -1,0 +1,14 @@
+[project]
+name = "openseeface"
+version = "1.20.4"
+description = "Robust realtime face and facial landmark tracking on CPU with Unity integration"
+readme = "README.md"
+authors = ["emilianavt"]
+license = "BSD-2-Clause"
+requires-python = "==3.9.*"
+dependencies = [
+    "numpy==1.21.3",
+    "onnxruntime==1.9.0",
+    "opencv-python==4.5.*",
+    "pillow==10.2.0",
+]
