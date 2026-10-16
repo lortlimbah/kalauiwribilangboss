@@ -270,6 +270,27 @@ describe("vts api", () => {
     assert.equal(byId.Nope, undefined);
   });
 
+  it("applies eye gain and smoothing", () => {
+    const neutral = {
+      FaceFound: true,
+      BlendShapes: [],
+      Rotation: { x: 0, y: 0, z: 0 },
+      Position: { x: 0, y: 0, z: 0.4 },
+    };
+    const look = {
+      ...neutral,
+      BlendShapes: [{ k: "EyeLookOutRight", v: 0.25 }],
+    };
+    const st0 = mapVtsSignals(neutral, {}, { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, eyeGain: 2, eyeSmooth: 0 }).poseState;
+    const { signals } = mapVtsSignals(look, st0, { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, eyeGain: 2, eyeSmooth: 0 });
+    const byId = Object.fromEntries(signals.map((s) => [s.id, s.value]));
+    assert.ok(Math.abs(byId.EyeLeftX - -0.5) < 1e-9);
+    const st1 = mapVtsSignals(neutral, {}, { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, eyeGain: 1, eyeSmooth: 1 }).poseState;
+    const held = mapVtsSignals(look, st1, { smooth: 0, posSmooth: 0, rotLeak: 0, posLeak: 0, eyeGain: 1, eyeSmooth: 1 });
+    const heldById = Object.fromEntries(held.signals.map((s) => [s.id, s.value]));
+    assert.equal(heldById.EyeLeftX, 0);
+  });
+
   it("caps hot position signals instead of railing", () => {
     const neutral = {
       FaceFound: true,

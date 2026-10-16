@@ -31,6 +31,8 @@ Options:
   --vts-pos-gain <n>    VTS head position gain (default 0.3)
   --vts-pos-z-gain <n>  VTS head distance gain (default 0.15)
   --vts-pos-jump <n>    VTS position teleport threshold (default 0.25)
+  --eye-gain <n>        eyeball travel multiplier (default 2)
+  --eye-smooth <n>      eyeball smoothing (default 0.5)
   --roll-gain <n>       head lean gain (default 0.15)
   --brow-sign <n>       1 or -1 brow direction (default 1)
   --yaw-sign <n>        1 or -1 head yaw direction (default 1)
@@ -119,6 +121,8 @@ async function main() {
     vtsPosGain: cfg.vtsPosGain,
     vtsPosZGain: cfg.vtsPosZGain,
     vtsPosJump: cfg.vtsPosJump,
+    eyeGain: cfg.eyeGain,
+    eyeSmooth: cfg.eyeSmooth,
   };
   const say = (line) => process.stdout.write(`${line}\n`);
   if (cfg.envFilePath) say(`Config: ${cfg.envFilePath} + flags`);

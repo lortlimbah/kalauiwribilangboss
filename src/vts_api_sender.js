@@ -309,11 +309,28 @@ export function mapVtsSignals(frame, vtsState = {}, opts = {}) {
   const alpha = opts.smooth ?? 0.5;
   const posAlpha = opts.posSmooth ?? 0.85;
   const rollAlpha = opts.rollSmooth ?? 0.8;
+  const eyeAlpha = opts.eyeSmooth ?? 0.5;
+  const eyeGain = opts.eyeGain ?? 2;
   const jump = opts.vtsPosJump ?? 0.25;
   const rawYaw = pose.rpy[1] * rotScale * yawSign;
   const rawPitch = pose.rpy[0] * rotScale * pitchSign;
   const rawRoll = pose.rpy[2] * rotScale * rollSign;
   const [rdx, rdy, rdz] = pose.vtsTranslation;
+  const rawGaze = {
+    lx: bOf(blend, "EyeLookInRight") - bOf(blend, "EyeLookOutRight"),
+    ly: bOf(blend, "EyeLookUpRight") - bOf(blend, "EyeLookDownRight"),
+    rx: bOf(blend, "EyeLookInLeft") - bOf(blend, "EyeLookOutLeft"),
+    ry: bOf(blend, "EyeLookUpLeft") - bOf(blend, "EyeLookDownLeft"),
+  };
+  const pg = vtsState.gaze ?? null;
+  const gazeKeys = ["lx", "ly", "rx", "ry"];
+  const smoothGaze = {};
+  for (const k of gazeKeys) {
+    const raw = Math.min(1, Math.max(-1, rawGaze[k]));
+    smoothGaze[k] = pg && found ? pg[k] * eyeAlpha + raw * (1 - eyeAlpha) : raw;
+  }
+  const eye = {};
+  for (const k of gazeKeys) eye[k] = smoothGaze[k] * eyeGain;
   const pe = vtsState.euler ?? null;
   const pp = vtsState.pos ?? null;
   const euler = pe && found
@@ -344,9 +361,11 @@ export function mapVtsSignals(frame, vtsState = {}, opts = {}) {
     }
   }
   if (!found && pe && pp) {
+    const frozen = {};
+    for (const k of gazeKeys) frozen[k] = (pg ?? rawGaze)[k] * eyeGain;
     return {
       faceFound: false,
-      signals: poseSignals(scalars, blend, pe[1], pe[0], pe[2], pp, posGain, posZGain, posMirrorX, rollGain, browSign),
+      signals: poseSignals(scalars, blend, pe[1], pe[0], pe[2], pp, posGain, posZGain, posMirrorX, rollGain, browSign, frozen),
       poseState: { ...vtsState, base: pose.state },
     };
   }
@@ -356,15 +375,15 @@ export function mapVtsSignals(frame, vtsState = {}, opts = {}) {
     peak += (mag - peak) * (mag > peak ? 0.15 : 0.002);
   }
   const agc = Math.min(1, 0.7 / Math.max(peak, 1e-3));
-  const next = { base: pose.state, euler, pos, streak, grace, peak };
+  const next = { base: pose.state, euler, pos, streak, grace, peak, gaze: smoothGaze };
   return {
     faceFound: found,
-    signals: poseSignals(scalars, blend, euler[1], euler[0], euler[2], pos, posGain * agc, posZGain * agc, posMirrorX, rollGain, browSign),
+    signals: poseSignals(scalars, blend, euler[1], euler[0], euler[2], pos, posGain * agc, posZGain * agc, posMirrorX, rollGain, browSign, eye),
     poseState: next,
   };
 }
 
-function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, posMirrorX = false, rollGain = 0.15, browSign = 1) {
+function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, posMirrorX = false, rollGain = 0.15, browSign = 1, eye = null) {
   const smileL = bOf(blend, "MouthSmileLeft");
   const smileR = bOf(blend, "MouthSmileRight");
   const frownL = bOf(blend, "MouthFrownLeft");
@@ -376,6 +395,12 @@ function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, p
   const funnel = bOf(blend, "MouthFunnel");
   const tongue = bOf(blend, "TongueOut");
   const mouthOpen = Math.min(1, Math.max(0, jawOpen - mouthClose - (rollU + rollL) * 0.2 + funnel * 0.2));
+  const gaze = eye ?? {
+    lx: bOf(blend, "EyeLookInRight") - bOf(blend, "EyeLookOutRight"),
+    ly: bOf(blend, "EyeLookUpRight") - bOf(blend, "EyeLookDownRight"),
+    rx: bOf(blend, "EyeLookInLeft") - bOf(blend, "EyeLookOutLeft"),
+    ry: bOf(blend, "EyeLookUpLeft") - bOf(blend, "EyeLookDownLeft"),
+  };
   const mouthSmile = ((smileL + smileR) / 2 - (frownL + frownR) / 2);
   const brows = 0.5 + (bOf(blend, "BrowOuterUpLeft") + bOf(blend, "BrowOuterUpRight") - bOf(blend, "BrowDownLeft") - bOf(blend, "BrowDownRight")) / 4;
   const browUpL = 0.5 + (bOf(blend, "BrowOuterUpLeft") - bOf(blend, "BrowDownLeft")) / 2;
@@ -396,10 +421,10 @@ function poseSignals(scalars, blend, yaw, pitch, roll, pos, posGain, posZGain, p
     { id: "Brows", kind: "mid", value: browsOut },
     { id: "EyeOpenLeft", kind: "uni", value: scalars.eyeOpenL },
     { id: "EyeOpenRight", kind: "uni", value: scalars.eyeOpenR },
-    { id: "EyeLeftX", kind: "bi", value: bOf(blend, "EyeLookInRight") - bOf(blend, "EyeLookOutRight") },
-    { id: "EyeLeftY", kind: "bi", value: bOf(blend, "EyeLookUpRight") - bOf(blend, "EyeLookDownRight") },
-    { id: "EyeRightX", kind: "bi", value: bOf(blend, "EyeLookInLeft") - bOf(blend, "EyeLookOutLeft") },
-    { id: "EyeRightY", kind: "bi", value: bOf(blend, "EyeLookUpLeft") - bOf(blend, "EyeLookDownLeft") },
+    { id: "EyeLeftX", kind: "bi", value: gaze.lx },
+    { id: "EyeLeftY", kind: "bi", value: gaze.ly },
+    { id: "EyeRightX", kind: "bi", value: gaze.rx },
+    { id: "EyeRightY", kind: "bi", value: gaze.ry },
     { id: "BrowInnerUp", kind: "uni", value: bOf(blend, "BrowInnerUp") },
     { id: "BrowLeftY", kind: "mid", value: browLOut },
     { id: "BrowRightY", kind: "mid", value: browROut },

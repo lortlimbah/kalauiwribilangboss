@@ -96,3 +96,6 @@
 - Mirror is per-axis now: yaw follows the raw sign (Sandoitchi agrees),
   roll stays mirrored (user-verified), posX stays unmirrored. Flip any
   single axis with YAW/ROLL/POSX_MIRROR without touching the others.
+- Eye gaze was near-invisible: look blendshapes rarely reach full range,
+  so `EYE_GAIN=2` multiplies all four eye XY signals (clamped downstream)
+  with light `EYE_SMOOTH=0.5` against jitter. Raise to 3-4 if still faint.
